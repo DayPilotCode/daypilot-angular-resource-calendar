@@ -1,11 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import {CommonModule} from '@angular/common';
-import {CalendarComponent} from './calendar/calendar.component';
+import { CalendarComponent } from './calendar/calendar.component';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, CalendarComponent],
+  imports: [CalendarComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

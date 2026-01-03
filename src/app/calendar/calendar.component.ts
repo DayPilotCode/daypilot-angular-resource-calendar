@@ -1,11 +1,11 @@
-import {Component, ViewChild, AfterViewInit} from "@angular/core";
+import {Component, ViewChild, AfterViewInit, signal} from "@angular/core";
 import {DayPilot, DayPilotCalendarComponent, DayPilotModule} from "@daypilot/daypilot-lite-angular";
 import {DataService} from "./data.service";
 import {forkJoin} from "rxjs";
 
 @Component({
   selector: 'calendar-component',
-  template: `<daypilot-calendar [config]="config" #calendar></daypilot-calendar>`,
+  template: `<daypilot-calendar [config]="config" [events]="events" #calendar></daypilot-calendar>`,
   imports: [DayPilotModule],
   providers: [DataService],
   styles: [``]
@@ -15,7 +15,9 @@ export class CalendarComponent implements AfterViewInit {
   @ViewChild("calendar")
   calendar!: DayPilotCalendarComponent;
 
-  config: DayPilot.CalendarConfig = {
+  events = signal<DayPilot.EventData[]>([]);
+
+  config = signal<DayPilot.CalendarConfig>({
     viewType: "Resources",
     headerHeight: 100,
     startDate: "2026-09-01",
@@ -66,7 +68,7 @@ export class CalendarComponent implements AfterViewInit {
       const data = args.column.data;
       const header = args.header;
       header.verticalAlignment = "top";
-      if (data.tags.image) {
+      if (data.tags?.image) {
         args.header.areas = [
           {
             left: "calc(50% - 30px)",
@@ -94,25 +96,25 @@ export class CalendarComponent implements AfterViewInit {
         }
       ];
     }
-  };
+  });
 
   constructor(private ds: DataService) {
   }
 
   ngAfterViewInit(): void {
 
-    const from = new DayPilot.Date(this.config.startDate);
+    const from = new DayPilot.Date(this.config().startDate);
     const to = from.addDays(1);
 
     forkJoin([
       this.ds.getResources(),
       this.ds.getEvents(from, to)
     ]).subscribe(data => {
-        const options = {
-          columns: data[0],
-          events: data[1]
-        };
-        this.calendar.control.update(options);
+        const events = data[1];
+        this.events.set(events);
+
+        const columns = data[0];
+        this.config.update(c => ({ ...c, columns }));
     });
 
   }
